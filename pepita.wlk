@@ -1,12 +1,14 @@
 import wollok.game.*
+import extras.*
+import direcciones.*
 
 object pepita {
+	var property energia = 200 //El getter y setter solo lo necesito para testear
+	var position = game.at(0,1) // game.origin() 
+	var estado = "normal"
 
-	var property energia = 100 //El getter y setter solo lo necesito para testear
-	var position = game.origin()
-
-	method image() { //metodo necesario para wollok game
-		return "pepita.png"
+	method image(){
+		return "pepita-" + estado + ".png"
 	}
 
 	method position() { //metodo necesario para wollok game
@@ -16,7 +18,6 @@ object pepita {
 	method position(_position) { //el setter solo lo necesito para testear
 		position = _position 
 	}
-
 
 	method text() { //metodo opcional para mostrar un texto en wollok game
 		return energia.toString()
@@ -28,12 +29,12 @@ object pepita {
 	
 	method volar(distancia) {
 		self.validarVolar(distancia)
-    	energia = energia - self.energiaQueGastaAlVolar(distancia)
+    	energia -= self.energiaQueGastaAlVolar(distancia)
   	}
 
 	method validarVolar(distancia) {
-		if (not self.puedeVolar(distancia)) {
-			self.error("No tengo energia para volar " + distancia)
+		if(not self.puedeVolar(distancia)) { 
+			self.perder()
 		}
 	}
 
@@ -44,7 +45,6 @@ object pepita {
 	method energiaQueGastaAlVolar(distancia) {
 		return 10 + distancia/10
   	}
-	
 
 	method mover(direccion) {
 		const nuevaPosition = direccion.siguiente(position) //No modifico la position en la primera linea porque volar podría lanzar error
@@ -52,5 +52,77 @@ object pepita {
 		position = nuevaPosition //ahora si puedo modificar la posicion
 	}
 
+	method caer() {
+		position = abajo.siguiente(position)
+	}
+
+	method ganar(){
+		estado = "grande"
+		game.say(self, "Gane")
+		game.schedule(500, {game.stop()})
+	}
+
+	method perder(){
+		estado = "gris"
+		game.say(self, "Perdí")
+		game.schedule(500, {game.stop()})
+	}
+
+	method comer(comida){
+		energia += comida.energia()
+	}
+
 }
 
+//game.say(pepita, "perdí, che")
+//game.schedule(2000, {game.stop()})
+
+//const moverse = game.tick(2000, {pepita.mover(iquierda)})
+//moverse.start()
+//moverse.stop()
+
+
+/*
+//Esquema como hacer excepciones bonitas.
+	method accion(a , b , c){ //Podría no tener parametros la orden o los necesarios
+		self.validarAccion() //la validacion podría o no necesitar ciertos parámetros, no se enviaria info propia ya que es info que el mismo objeto ya conoce.
+		//Si se lanza una excepción la logica que continua nunca se ejecuta. Se frena el flujo del programa, aunque los objetos siguen andando.
+
+		//código / lógica de negocio que hace si puede realizar la orden.
+	}
+
+	method validarAccion() { //La validacion podría o no tener que recibir cierta información
+		if(not self.puedeAccionar()) { //Condición (usualmente negada) de si puede realizar la acción,
+			self.error("no puede accionar!") //Si no puede entonces lanza una excepción
+		}
+	}
+
+	method puedeAccionar(){
+		return condicionParaPoderAcciones
+	}
+*/
+
+
+//##############################################################################
+
+object perdedora{
+
+	method mover(ave, direccion){
+		self.terminarJuego(ave)
+	}
+
+	method terminarJuego(ave){
+		game.say(ave, "estoy atrapada")
+		game.schedule(3000, {game.stop()})
+	}
+	
+}
+
+object jaula{
+	const property image = "jaula.png"
+	const property position = game.at(3,3)
+
+	method cruzarse(alguien){
+		alguien.perder()
+	}
+}
